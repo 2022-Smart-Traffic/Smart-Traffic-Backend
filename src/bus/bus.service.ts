@@ -16,8 +16,8 @@ export class BusService {
     ) {}
 
     async getLineList(lineNo: string) {
-        const lineInfo = (await lastValueFrom(this.httpService.get(this.getLineListURL(lineNo)))).data;
-        const lineList = JSON.parse(xml2json(lineInfo, {compact: true}))?.response?.body?.items?.item
+        const lineRes = (await lastValueFrom(this.httpService.get(this.getLineListURL(lineNo)))).data;
+        const lineList = JSON.parse(xml2json(lineRes, {compact: true}))?.response?.body?.items?.item
         if (!lineList) throw new NotFoundException();
         return lineList;
     }
@@ -25,8 +25,8 @@ export class BusService {
     async getBusStopList(dto: GetBusStopListDTO) {
         const { lineNo, lineId } = dto;
         
-        const busStopInfo = (await lastValueFrom(this.httpService.get(this.getBusStopListURL(lineId)))).data;
-        const busStopList = JSON.parse(xml2json(busStopInfo, {compact: true}))?.response?.body?.items?.item
+        const busStopRes = (await lastValueFrom(this.httpService.get(this.getBusStopListURL(lineId)))).data;
+        const busStopList = JSON.parse(xml2json(busStopRes, {compact: true}))?.response?.body?.items?.item
         if (!busStopList) throw new NotFoundException();
 
         const busStopPosInfo = await this.busStopRepository.find({
@@ -39,13 +39,32 @@ export class BusService {
         return busStopPosInfo.map(busStop => {
             return {
                 id: (Object.values(busStopList)
-                        .filter((busData: any) => busData.bstopidx._text == busStop.idx)[0] as any)?.nodeid?._text,
-                name: busStop.busName,
+                        .filter((busData: any) => busData.bstopidx._text == busStop.idx)[0] as any),
+                name: busStop.busStopName,
                 posX: busStop.gpsX,
                 posY: busStop.gpsY,
                 idx: busStop.idx
             }
         });
+    }
+
+    async getBusSeatInfo() {
+        const seat = [
+            [0, 0, 0, 0, -1, 0, -1, 0, -1, 0, -1],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1],
+            [0, 0, 0, 0, 0, 0, -1, 0, -1, 0, -1],
+            [-1, 0, -1, 0, 0, 0, -1, 0, -1, 0, -1]
+        ]
+        seat.forEach((rows, i) => {
+            rows.forEach((value, j) => {
+                if (value == -1) {
+                    if (Math.floor(Math.random() * 2) == 0) {
+                        seat[i][j] = 1;
+                    }
+                }
+            })
+        });
+        return seat;
     }
 
     private getLineListURL (lineNo: string) {

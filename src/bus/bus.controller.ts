@@ -20,4 +20,9 @@ export class BusController {
     ) {
         return this.busService.getBusStopList(dto);
     }
+
+    @Get('/seat')
+    getBusSeatInfo() {
+        return this.busService.getBusSeatInfo();
+    }
 }
